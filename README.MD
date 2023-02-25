@@ -94,8 +94,9 @@ compares 2 values and return the lowest number
 ```
 
 Result:
- 
+```
 10
+```
 
 **MAX(10,20)**
  
@@ -108,8 +109,10 @@ compares 2 values and return the highest  number
 ```
 
 Result:
- 
+``` 
 20
+```
+
 
 **LOG(65)**
 
@@ -121,10 +124,12 @@ returns the natural logarithm of x
 ```
 
 Result:
- 
+``` 
 4
+```
 
-**LOG(<INT x>, <INT n>)**
+
+**LOG(65,65)**
  
 returns the logarithm of x in base n
 
@@ -134,10 +139,11 @@ returns the logarithm of x in base n
 ```
 
 Result:
+```
 6
+```
 
-
-**POW(<INT>,<INT>)**
+**POW(2,3)**
 
 ```
 10 A=2:B=3
@@ -145,8 +151,9 @@ Result:
 ```
 
 Result:
- 
+```
 8
+```
 
 **SGN(12)**
 
