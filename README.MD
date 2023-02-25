@@ -6,9 +6,9 @@ There is already a further development, but unfortunately the code is not public
 
 With this fork I have now added some functions and hope for participation of others to get a really good basic out of it. New is for example already:
 
-OLD: **RND(<INT>)** can now also be surrounded with two were:
+OLD: **RND(8)** can now also be surrounded with two were:
 
-**RND(<INT>,<INT>)**
+**RND(4,8)**
 Generates a random number. If 2 values are specified, a number between the 2 values is generated.
 
 ```
