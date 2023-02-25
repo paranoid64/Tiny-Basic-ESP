@@ -65,11 +65,7 @@ byte: 	p	q	r	s	t	u	v	w	x	y	z	{	|	}	~
 ```
  
 
-<<<<<<< HEAD
 **TAB 3**
-=======
-**TAB <int>**
->>>>>>> e11efa8317db9a4c6737bc603025b9db678139fa
 
 This function influences the output so that positioning of the cursor to the desired column is achieved.
 
@@ -101,11 +97,7 @@ Result:
  
 10
 
-<<<<<<< HEAD
 **MAX(10,20)**
-=======
-**MAX(<INT>,<INT>)**
->>>>>>> e11efa8317db9a4c6737bc603025b9db678139fa
  
 compares 2 values and return the highest  number
 
@@ -119,11 +111,7 @@ Result:
  
 20
 
-<<<<<<< HEAD
 **LOG(65)**
-=======
-**LOG(<INT x>)**
->>>>>>> e11efa8317db9a4c6737bc603025b9db678139fa
 
 returns the natural logarithm of x
 
@@ -136,11 +124,7 @@ Result:
  
 4
 
-<<<<<<< HEAD
-**LOG(65, 2)**
-=======
 **LOG(<INT x>, <INT n>)**
->>>>>>> e11efa8317db9a4c6737bc603025b9db678139fa
  
 returns the logarithm of x in base n
 
@@ -153,7 +137,7 @@ Result:
 6
 
 
-**POW(2,3)**
+**POW(<INT>,<INT>)**
 
 ```
 10 A=2:B=3
@@ -164,11 +148,7 @@ Result:
  
 8
 
-<<<<<<< HEAD
 **SGN(12)**
-=======
-**SGN(<int>)**
->>>>>>> e11efa8317db9a4c6737bc603025b9db678139fa
 
 The sign function result is -1, 0 or +1 according as the argument is negative, zero or positive
 
