@@ -1,105 +1,7 @@
-#define kVersion "v0.15"
+#define kVersion "v0.16"
+uint8_t myScreen;
 
-// v0.15: 2029-10-23
-//      Changes by fg1998 (fg1998@gmail.com)
-//      Only for ESP32 with FabGL !!!!!!
-//      Modified for latest version of FagGL (0.9.0)
-//      Redefined SPI Pins for SD Card work with VGA32_V1.4 from TTGO - SCK = 14,  MISO = 02, MOSI = 12, CS = 13
-//      Backspace is now working with Terminal
-//      LOAD and SAVE working,  needs to start with a '/' ex: LOAD "/test.bas"  
-//      Adjust screen resolution to 640x200 (80x25 text) for low ram use
-//      **NEW COMMANDS
-//      CLS
-//      COLOR <INT>,<INT> -> FORECOLOR, BACKCOLOR
-//      POINT <INT>, <INT>, <INT> -> COLOR, X, Y
-//      LINE <INT>, <INT>, <INT>, <INT>, <INT>, <INT>  -> COLOR, INIT X, INIT Y, END X, END Y, PEN WIDTH
-//      RECTANGLE <INT>, <INT>, <INT>, <INT>, <INT>, <INT>, <INT> -> COLOR, COLOR FILL (-1 USES NO COLOR), INIT X, INIT Y, END X, END Y, PEN WIDTH
-//      ELIPSE <INT>, <INT>, <INT>, <INT>, <INT> -> COLOR, X, Y, WIDTH, HEIGHT, PEN WIDTH
-//      CURSOR 0/1 -> ENABLE/DISABLE CURSOR
-//      AT <INT>,<INT> -> puts cursor on x,y
-
-//      
-// v0.14: 2013-11-07
-//      Input command always set the variable to 99
-//      Modified Input command to accept an expression using getn()
-//      Syntax is "input x" where x is any variable
-//
-// v0.13: 2013-03-04
-//      Support for Arduino 1.5 (SPI.h included, additional changes for DUE support)
-//
-// v0.12: 2013-03-01
-//      EEPROM load and save routines added: EFORMAT, ELIST, ELOAD, ESAVE, ECHAIN
-//      added EAUTORUN option (chains to EEProm saved program on startup)
-//      Bugfixes to build properly on non-arduino systems (PROGMEM #define workaround)
-//      cleaned up a bit of the #define options wrt TONE
-//
-// v0.11: 2013-02-20
-//      all display strings and tables moved to PROGMEM to save space
-//      removed second serial
-//      removed pinMode completely, autoconf is explicit
-//      beginnings of EEPROM related functionality (new,load,save,list)
-//
-// v0.10: 2012-10-15
-//      added kAutoConf, which eliminates the "PINMODE" statement.
-//      now, DWRITE,DREAD,AWRITE,AREAD automatically set the PINMODE appropriately themselves.
-//      should save a few bytes in your programs.
-//
-// v0.09: 2012-10-12
-//      Fixed directory listings.  FILES now always works. (bug in the SD library)
-//      ref: http://arduino.cc/forum/index.php/topic,124739.0.html
-//      fixed filesize printouts (added printUnum for unsigned numbers)
-//      #defineable baud rate for slow connection throttling
-//e
-// v0.08: 2012-10-02
-//      Tone generation through piezo added (TONE, TONEW, NOTONE)
-//
-// v0.07: 2012-09-30
-//      Autorun buildtime configuration feature
-//
-// v0.06: 2012-09-27
-//      Added optional second serial input, used for an external keyboard
-//
-// v0.05: 2012-09-21
-//      CHAIN to load and run a second file
-//      RND,RSEED for random stuff
-//      Added "!=" for "<>" synonym
-//      Added "END" for "STOP" synonym (proper name for the functionality anyway)
-//
-// v0.04: 2012-09-20
-//      DELAY ms   - for delaying
-//      PINMODE <pin>, INPUT|IN|I|OUTPUT|OUT|O
-//      DWRITE <pin>, HIGH|HI|1|LOW|LO|0
-//      AWRITE <pin>, [0..255]
-//      fixed "save" appending to existing files instead of overwriting
-//  Updated for building desktop command line app (incomplete)
-//
-// v0.03: 2012-09-19
-//  Integrated Jurg Wullschleger whitespace,unary fix
-//  Now available through github
-//  Project renamed from "Tiny Basic in C" to "TinyBasic Plus"
-//     
-// v0.02b: 2012-09-17  Scott Lawrence <yorgle@gmail.com>
-//  Better FILES listings
-//
-// v0.02a: 2012-09-17  Scott Lawrence <yorgle@gmail.com>
-//  Support for SD Library
-//  Added: SAVE, FILES (mostly works), LOAD (mostly works) (redirects IO)
-//  Added: MEM, ? (PRINT)
-//  Quirk:  "10 LET A=B+C" is ok "10 LET A = B + C" is not.
-//  Quirk:  INPUT seems broken?
-
-
-char eliminateCompileErrors = 1;  // fix to suppress arduino build errors
-int myScreen; 
-
-// hack to let makefiles work with this file unchanged
-#ifdef FORCE_DESKTOP 
-#undef ARDUINO
-#include "desktop.h"
-#else
 #define ARDUINO 1
-#endif
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // Feature option configuration...
@@ -107,7 +9,6 @@ int myScreen;
 // This enables LOAD, SAVE, FILES commands through the Arduino SD Library
 // it adds 9k of usage as well.
 #define ENABLE_FILEIO 1
-
 
 // this turns on "autorun".  if there's FileIO, and a file "autorun.bas",
 // then it will load it and run it when starting up
@@ -125,21 +26,17 @@ int myScreen;
 // element on the specified pin.  Wire the red/positive/piezo to the kPiezoPin,
 // and the black/negative/metal disc to ground.
 // it adds 1.5k of usage as well.
-//#define ENABLE_TONES 1
-#undef ENABLE_TONES
-#define kPiezoPin 6 //------------------------------------------ default era 5 -----------------------------------
+#define ENABLE_TONES 1
+//#undef ENABLE_TONES
+#define kPiezoPin 13
+#define TONE_LEDC_CHANNEL (0)
 
-// we can use the EEProm to store a program during powerdown.  This is 
-// 1kbyte on the '328, and 512 bytes on the '168.  Enabling this here will
-// allow for this funcitonality to work.  Note that this only works on AVR
-// arduino.  Disable it for DUE/other devices.
-//#define ENABLE_EEPROM 1
-#undef ENABLE_EEPROM
+// change keyboard layout
+// 0 = US, 1 = UK, 2 = DE,3 = IT,4 = ES
+#define keyboard_layout 2
+
 #include "WiFi.h" // include this or you´ll get erro in FabGL
-#include "fabgl.h" 
-
-
-
+#include "fabgl.h"
 
 fabgl::VGAController VGAController;
 fabgl::PS2Controller PS2Controller;
@@ -147,65 +44,41 @@ fabgl::Terminal      Terminal;
 Canvas cv(&VGAController);
 TerminalController tc(&Terminal);
 
-
-
-void print_info()
-{
-  Terminal.write("\e[33mESP32 TinyBasic PC with VGA monitor and PS2keyboard\r\n");
-  Terminal.write("\e[32mby Roberto Melzi\e[32m\r\n\n");
-  Terminal.write("\e[32mVGA32_V1.4 by fg1998 \e[31m github.com/fg1998/ESP32-Basic-vga \e[32m\r\n\n");
-  Terminal.write("\e[37mFabGL - Loopback VT/ANSI Terminal\r\n");
-  Terminal.write("\e[37m2019 by Fabrizio Di Vittorio - www.fabgl.com\e[32m\r\n\n");
-  Terminal.printf("\e[31mScreen Size        :\e[33m %d x %d\r\n", VGAController.getScreenWidth(), VGAController.getScreenHeight());
-  Terminal.printf("\e[32mTerminal Size      :\e[33m %d x %d\r\n", Terminal.getColumns(), Terminal.getRows());
-  Terminal.printf("\e[35mFree DMA Memory    :\e[33m %d\r\n", heap_caps_get_free_size(MALLOC_CAP_DMA));
-  Terminal.printf("\e[36mFree 32 bit Memory :\e[33m %d\r\n\n", heap_caps_get_free_size(MALLOC_CAP_32BIT));
-  Terminal.printf("\e[37mTinyBasic Plus v0.15\r\n");
-  //Terminal.write("\e[32mFree typing test - press ESC to introduce escape VT/ANSI codes\r\n\n");
-
-}
-
-
 // Sometimes, we connect with a slower device as the console.
 // Set your console D0/D1 baud rate here (9600 baud default)
-//#define kConsoleBaud 9600
-#define kConsoleBaud 115200 
+#define kConsoleBaud 115200
 
 ////////////////////////////////////////////////////////////////////////////////
 #ifdef ARDUINO
-#ifndef RAMEND
-// okay, this is a hack for now
-// if we're in here, we're a DUE probably (ARM instead of AVR)
+  #ifndef RAMEND
+  // okay, this is a hack for now
+  // if we're in here, we're a DUE probably (ARM instead of AVR)
 
-//#define RAMEND 4096-1
-#define RAMEND 16384-1  //-------------------------- RAM increment for ESP32 --------------------------------------------------- 
-
-// turn off EEProm
-#undef ENABLE_EEPROM //----------------------------- provo a commentare questo ma non va --------------------------------------- 
-#undef ENABLE_TONES  //----------------------------- provo a commentare questo ma non va --------------------------------------- 
-
+  //#define RAMEND 4096-1
+  #define RAMEND 16384-1  //-------------------------- RAM increment for ESP32 ---------------------------------------------------
 #endif
 
-
-
-#include <FS.h> 
+#include <FS.h>
+#include <SPI.h>
 #include <SD.h>
-#include <SPI.h> /* needed as of 1.5 beta */
 
-
-//SPI CLASS FOR REDEFINED SPI PINS !
-SPIClass spiSD(HSPI);
-
-
-// Arduino-specific configuration
-// set this to the card select for your SD shield
-#define kSD_CS 13  // ------------------------ old era 10 -------------------------------------------------------------
+/*
+ * Connect the SD card to the following pins:
+ *
+ * SD Card      |       ESP32
+*+++++++++++++++++++++++++++++++++++
+ * # VDD        |       3.3V
+ * # VSS        |       GND
+ * # CLK        |       SCK    GPIO18
+ * # MISO       |       MISO   GPIO19
+ * # MOSI       |       MOSI   GPIO23
+ * # CS         |       SS     GPIO05
+ */
 
 #define kSD_Fail  0
 #define kSD_OK    1
 
 File fp;
-
 
 // set up our RAM buffer size for program and user input
 // NOTE: This number will have to change if you include other libraries.
@@ -221,7 +94,7 @@ File fp;
 #define kRamTones (0)
 #endif
 #endif /* ARDUINO */
-#define kRamSize  (RAMEND - 1160 - kRamFileIO - kRamTones) 
+#define kRamSize  (RAMEND - 1160 - kRamFileIO - kRamTones)
 
 #ifndef ARDUINO
 // Not arduino setup
@@ -231,7 +104,7 @@ File fp;
 
 // size of our program ram
 #define kRamSize   4096 /* arbitrary */
-//#define kRamSize   16384 /* arbitrary */ //-------------------------------------------------------------- kRamSize ------------------------------------------------------------------------- 
+//#define kRamSize   16384 /* arbitrary */ //-------------------------------------------------------------- kRamSize -------------------------------------------------------------------------
 
 #ifdef ENABLE_FILEIO
 FILE * fp;
@@ -245,7 +118,7 @@ void cmd_Files( void );
 
 ////////////////////
 
-#ifndef boolean 
+#ifndef boolean
 #define boolean int
 #define true 1
 #define false 0
@@ -284,12 +157,11 @@ enum {
 static unsigned char inStream = kStreamSerial;
 static unsigned char outStream = kStreamSerial;
 
-
 ////////////////////////////////////////////////////////////////////////////////
 // ASCII Characters
 #define CR  '\r'
 #define NL  '\n'
-#define LF      0x0a
+#define LF  0x0a
 #define TAB '\t'
 #define BELL  '\b'
 #define SPACE   ' '
@@ -308,12 +180,12 @@ typedef short unsigned LINENUM;
 #define ECHO_CHARS 0
 #endif
 
-
 static unsigned char program[kRamSize];
 static const char *  sentinel = "HELLO";
 static unsigned char *txtpos,*list_line, *tmptxtpos;
 static unsigned char expression_error;
 static unsigned char *tempsp;
+static long old_millis=0;
 
 /***********************************************************/
 // Keyword table and constants - the last character has 0x80 added to it
@@ -346,7 +218,7 @@ const static unsigned char keywords[] PROGMEM = {
   'E','N','D'+0x80,
   'R','S','E','E','D'+0x80,
   'C','H','A','I','N'+0x80,
-  //NEW COMMANDS BY fg1998@gmail.com, only for ESP32
+  'M','I','L','S'+0x80,
   'C','L','S'+0x80,
   'C','O','L','O','R'+0x80,
   'P','O','I','N','T'+0x80,
@@ -356,10 +228,18 @@ const static unsigned char keywords[] PROGMEM = {
   'C','U','R','S','O','R'+0x80,
   'A','T'+0x80,
   'I','N','K','E','Y'+0x80,
+  'S','C','R','O','L','L'+0x80,
+  'C','H','R'+0x80,
+  'T','A','B'+0x80,
+#ifdef ENABLE_TONES
+  'T','O','N','E','W'+0x80,
+  'T','O','N','E'+0x80,
+  'N','O','T','O','N','E'+0x80,
+#endif
   0
 };
 
-// by moving the command list to an enum, we can easily remove sections 
+// by moving the command list to an enum, we can easily remove sections
 // above and below simultaneously to selectively obliterate functionality.
 enum {
   KW_LIST = 0,
@@ -379,6 +259,7 @@ enum {
   KW_END,
   KW_RSEED,
   KW_CHAIN,
+  KW_MILS,
   KW_CLS,
   KW_COLOR,
   KW_POINT,
@@ -388,6 +269,12 @@ enum {
   KW_CURSOR,
   KW_AT,
   KW_INKEY,
+  KW_SCROLL,
+  KW_CHR,
+  KW_TAB,
+#ifdef ENABLE_TONES
+  KW_TONEW, KW_TONE, KW_NOTONE,
+#endif  
   KW_DEFAULT /* always the final one*/
 };
 
@@ -408,18 +295,49 @@ struct stack_gosub_frame {
 
 const static unsigned char func_tab[] PROGMEM = {
   'P','E','E','K'+0x80,
+  'G','E','T'+0x80,  
   'A','B','S'+0x80,
   'A','R','E','A','D'+0x80,
   'D','R','E','A','D'+0x80,
   'R','N','D'+0x80,
+  'S','I','N'+0x80,
+  'C','O','S'+0x80,
+  'T','A','N'+0x80,
+  'S','G','N'+0x80,
+  'I','N','T'+0x80,
+  'P','O','W'+0x80,
+  'M','I','N'+0x80,
+  'M','A','X'+0x80,
+  'S','Q','R'+0x80,
+  'E','X','P'+0x80,
+  'L','O','G'+0x80,
+  'L','N'+0x80,
+  'R','O','O','T'+0x80,
+  'S','Q'+0x80,
   0
 };
+
 #define FUNC_PEEK    0
-#define FUNC_ABS     1
-#define FUNC_AREAD   2
-#define FUNC_DREAD   3
-#define FUNC_RND     4
-#define FUNC_UNKNOWN 5
+#define FUNC_GET     1
+#define FUNC_ABS     2
+#define FUNC_AREAD   3
+#define FUNC_DREAD   4
+#define FUNC_RND     5
+#define FUNC_SIN     6
+#define FUNC_COS     7
+#define FUNC_TAN     8
+#define FUNC_SGN     9
+#define FUNC_INT     10
+#define FUNC_POW     11
+#define FUNC_MIN     12
+#define FUNC_MAX     13
+#define FUNC_SQR     14
+#define FUNC_EXP     15
+#define FUNC_LOG     16
+#define FUNC_LN      17
+#define FUNC_ROOT    18
+#define FUNC_SQ      19
+#define FUNC_UNKNOWN 20
 
 const static unsigned char to_tab[] PROGMEM = {
   'T','O'+0x80,
@@ -448,10 +366,10 @@ const static unsigned char relop_tab[] PROGMEM = {
 #define RELOP_EQ    3
 #define RELOP_LE    4
 #define RELOP_LT    5
-#define RELOP_NE_BANG   6
+#define RELOP_NE_BANG 6
 #define RELOP_UNKNOWN 7
 
-const static unsigned char highlow_tab[] PROGMEM = { 
+const static unsigned char highlow_tab[] PROGMEM = {
   'H','I','G','H'+0x80,
   'H','I'+0x80,
   'L','O','W'+0x80,
@@ -481,58 +399,59 @@ static const unsigned char whatmsg[]          PROGMEM = "What? ";
 static const unsigned char howmsg[]           PROGMEM = "How?";
 static const unsigned char sorrymsg[]         PROGMEM = "Sorry!";
 static const unsigned char initmsg[]          PROGMEM = "TinyBasic Plus " kVersion;
-static const unsigned char memorymsg[]        PROGMEM = "bytes free :";
-#ifdef ARDUINO
-#ifdef ENABLE_EEPROM
-static const unsigned char eeprommsg[]        PROGMEM = " EEProm bytes total.";
-static const unsigned char eepromamsg[]       PROGMEM = " EEProm bytes available.";
-#endif
-#endif
+static const unsigned char memorymsg[]        PROGMEM = " bytes free";
 static const unsigned char breakmsg[]         PROGMEM = "break!";
 static const unsigned char unimplimentedmsg[] PROGMEM = "Unimplemented";
 static const unsigned char backspacemsg[]     PROGMEM = "\b\e[K";
 static const unsigned char indentmsg[]        PROGMEM = "    ";
 static const unsigned char sderrormsg[]       PROGMEM = "SD card error.";
+static const unsigned char sdcardmsg[]        PROGMEM = "No SD card.";
 static const unsigned char sdfilemsg[]        PROGMEM = "SD file error.";
 static const unsigned char dirextmsg[]        PROGMEM = "(dir)";
 static const unsigned char slashmsg[]         PROGMEM = "/";
 static const unsigned char spacemsg[]         PROGMEM = " ";
+static const unsigned char basic[]         PROGMEM = "Tiny Basic ESP32 - ";
 
 static int inchar(void);
 static void outchar(unsigned char c);
 static void line_terminator(void);
-static short int expression(void);
+static double expression(void);
 static unsigned char breakcheck(void);
-/***************************************************************************/
-static void ignore_blanks(void)
+static double expression(void);
+static void print_info(void);
+
+static double nthroot(double number, double n)
 {
+  if (n == 0) return NAN;
+  if (number > 0) return pow(number, 1.0 / n);
+  if (number == 0) return 0;
+  if (number < 0 && int(n) == n && (int(n) & 1)) return -pow(-number, 1.0 / n);
+  return NAN;
+}
+
+/***************************************************************************/
+static void ignore_blanks(void) {
   while(*txtpos == SPACE || *txtpos == TAB)
     txtpos++;
 }
 
-
 /***************************************************************************/
-static void scantable(const unsigned char *table)
-{
+static void scantable(const unsigned char *table) {
   int i = 0;
   table_index = 0;
-  while(1)
-  {
+  while(1) {
     // Run out of table entries?
     if(pgm_read_byte( table ) == 0)
       return;
 
     // Do we match this character?
-    if(txtpos[i] == pgm_read_byte( table ))
-    {
+    if(txtpos[i] == pgm_read_byte( table )) {
       i++;
       table++;
     }
-    else
-    {
+    else {
       // do we match the last character of keywork (with 0x80 added)? If so, return
-      if(txtpos[i]+0x80 == pgm_read_byte( table ))
-      {
+      if(txtpos[i]+0x80 == pgm_read_byte( table )) {
         txtpos += i+1;  // Advance the pointer to following the keyword
         ignore_blanks();
         return;
@@ -552,15 +471,13 @@ static void scantable(const unsigned char *table)
 }
 
 /***************************************************************************/
-static void pushb(unsigned char b)
-{
+static void pushb(unsigned char b) {
   sp--;
   *sp = b;
 }
 
 /***************************************************************************/
-static unsigned char popb()
-{
+static unsigned char popb() {
   unsigned char b;
   b = *sp;
   sp++;
@@ -568,6 +485,7 @@ static unsigned char popb()
 }
 
 /***************************************************************************/
+
 void printnum(int num)
 {
   int digits = 0;
@@ -610,16 +528,13 @@ void printUnum(unsigned int num)
 }
 
 /***************************************************************************/
-static unsigned short testnum(void)
-{
+static unsigned short testnum(void) {
   unsigned short num = 0;
   ignore_blanks();
 
-  while(*txtpos>= '0' && *txtpos <= '9' )
-  {
+  while(*txtpos>= '0' && *txtpos <= '9' ) {
     // Trap overflows
-    if(num >= 0xFFFF/10)
-    {
+    if(num >= 0xFFFF/10) {
       num = 0xFFFF;
       break;
     }
@@ -631,8 +546,7 @@ static unsigned short testnum(void)
 }
 
 /***************************************************************************/
-static unsigned char print_quoted_string(void)
-{
+static unsigned char print_quoted_string(void) {
   int i=0;
   unsigned char delim = *txtpos;
   if(delim != '"' && delim != '\'')
@@ -640,52 +554,43 @@ static unsigned char print_quoted_string(void)
   txtpos++;
 
   // Check we have a closing delimiter
-  while(txtpos[i] != delim)
-  {
+  while(txtpos[i] != delim) {
     if(txtpos[i] == NL)
       return 0;
     i++;
   }
 
   // Print the characters
-  while(*txtpos != delim)
-  {
+  while(*txtpos != delim) {
     outchar(*txtpos);
     txtpos++;
   }
   txtpos++; // Skip over the last delimiter
-
   return 1;
 }
 
-
 /***************************************************************************/
-void printmsgNoNL(const unsigned char *msg)
-{
+void printmsgNoNL(const unsigned char *msg) {
   while( pgm_read_byte( msg ) != 0 ) {
     outchar( pgm_read_byte( msg++ ) );
   };
 }
 
 /***************************************************************************/
-void printmsg(const unsigned char *msg)
-{
+void printmsg(const unsigned char *msg) {
   printmsgNoNL(msg);
   line_terminator();
 }
 
 /***************************************************************************/
-static void getln(char prompt)
-{
- 
+static void getln(char prompt) {
+
   outchar(prompt);
   txtpos = program_end+sizeof(LINENUM);
 
-  while(1)
-  {
+  while(1) {
     char c = inchar();
-    switch(c)
-    {
+    switch(c) {
     case NL:
       //break;
     case CR:
@@ -701,13 +606,12 @@ static void getln(char prompt)
       //printmsg(backspacemsg);
       Terminal.write("\b\e[K");
       break;
-      
+
     default:
       // We need to leave at least one space to allow us to shuffle the line into order
       if(txtpos == variables_begin-2)
         outchar(BELL);
-      else
-      {
+      else {
         txtpos[0] = c;
         txtpos++;
         outchar(c);
@@ -717,11 +621,9 @@ static void getln(char prompt)
 }
 
 /***************************************************************************/
-static unsigned char *findline(void)
-{
+static unsigned char *findline(void) {
   unsigned char *line = program_start;
-  while(1)
-  {
+  while(1) {
     if(line == program_end)
       return line;
 
@@ -734,13 +636,11 @@ static unsigned char *findline(void)
 }
 
 /***************************************************************************/
-static void toUppercaseBuffer(void)
-{
+static void toUppercaseBuffer(void) {
   unsigned char *c = program_end+sizeof(LINENUM);
   unsigned char quote = 0;
 
-  while(*c != NL)
-  {
+  while(*c != NL) {
     // Are we in a quoted string?
     if(*c == quote)
       quote = 0;
@@ -753,8 +653,7 @@ static void toUppercaseBuffer(void)
 }
 
 /***************************************************************************/
-void printline()
-{
+void printline() {
   LINENUM line_num;
 
   line_num = *((LINENUM *)(list_line));
@@ -763,8 +662,7 @@ void printline()
   // Output the line */
   printnum(line_num);
   outchar(' ');
-  while(*list_line != NL)
-  {
+  while(*list_line != NL) {
     outchar(*list_line);
     list_line++;
   }
@@ -773,8 +671,7 @@ void printline()
 }
 
 /***************************************************************************/
-static short int expr4(void)
-{
+static double expr4(void) {
   // fix provided by Jurg Wullschleger wullschleger@gmail.com
   // fixes whitespace and unary operations
   ignore_blanks();
@@ -785,80 +682,144 @@ static short int expr4(void)
   }
   // end fix
 
-  if(*txtpos == '0')
-  {
+  if(*txtpos == '0') {
     txtpos++;
     return 0;
   }
 
-  if(*txtpos >= '1' && *txtpos <= '9')
-  {
+  if(*txtpos >= '1' && *txtpos <= '9') {
     short int a = 0;
     do  {
       a = a*10 + *txtpos - '0';
       txtpos++;
-    } 
+    }
     while(*txtpos >= '0' && *txtpos <= '9');
     return a;
   }
 
   // Is it a function or variable reference?
-  if(txtpos[0] >= 'A' && txtpos[0] <= 'Z')
-  {
+  if(txtpos[0] >= 'A' && txtpos[0] <= 'Z') {
+    unsigned char var;
     short int a;
+    short int b;
     // Is it a variable reference (single alpha)
-    if(txtpos[1] < 'A' || txtpos[1] > 'Z')
-    {
+    if(txtpos[1] < 'A' || txtpos[1] > 'Z') {
       a = ((short int *)variables_begin)[*txtpos - 'A'];
       txtpos++;
       return a;
     }
 
+
     // Is it a function with a single parameter
     scantable(func_tab);
-    if(table_index == FUNC_UNKNOWN)
+    if(table_index == FUNC_UNKNOWN) {
       goto expr4_error;
+    }
+    else {
 
-    unsigned char f = table_index;
+      unsigned char f = table_index;
 
-    if(*txtpos != '(')
-      goto expr4_error;
+      ignore_blanks();
+      if(*txtpos < 'A' || *txtpos > 'Z')
 
-    txtpos++;
-    a = expression();
-    if(*txtpos != ')')
-      goto expr4_error;
-    txtpos++;
-    switch(f)
-    {
-    case FUNC_PEEK:
-      return program[a];
-      
-    case FUNC_ABS:
-      if(a < 0) 
-        return -a;
-      return a;
+      if(*txtpos != '(')
+        goto expr4_error;
 
+      txtpos++;
+      a = expression();
 
-    case FUNC_AREAD:
-      pinMode( a, INPUT );
-      return analogRead( a );                        
-    case FUNC_DREAD:
-      pinMode( a, INPUT );
-      return digitalRead( a );
+      //double parameter
+      if(*txtpos == ',') {
+        txtpos++;
+        ignore_blanks();
 
+        b = expression();
 
-    case FUNC_RND:
-#ifdef ARDUINO
-      return( random( a ));
-#else
-      return( rand() % a );
-#endif
+      } else {
+        b = -1;
+      }
+
+      if(*txtpos != ')')
+        goto expr4_error;
+      txtpos++;
+
+      switch(f) {
+
+        case FUNC_PEEK:
+        case FUNC_GET:        
+          return program[a];
+
+        case FUNC_ABS:
+          if(a < 0)
+            return -a;
+          return a;
+
+        case FUNC_AREAD:
+          pinMode( a, INPUT );       
+          return analogRead( a );
+        case FUNC_DREAD:
+          pinMode( a, INPUT );
+          return digitalRead( a );
+
+        case FUNC_RND:
+          if(b<0){
+            return( random( a ));
+          } else {
+            return( random( a,b ));
+          }
+
+        case FUNC_SGN:
+          if (a < 0)
+              return -1;
+          else if (a > 0)
+              return 1;
+          return a;
+
+        case FUNC_SIN:
+          return( sin( a ));
+
+        case FUNC_COS:
+          return( cos( a ));
+
+        case FUNC_TAN:
+          return( cos( a ));
+
+        case FUNC_INT:
+          return( (int)a );
+
+        case FUNC_POW:
+          return( pow(a, b) );
+
+        case FUNC_MIN:       
+          return( min(a, b) );
+
+        case FUNC_MAX:       
+          return( max(a, b) );
+
+        case FUNC_SQR:
+           return( sqrt(a) );
+
+        case FUNC_EXP:
+           return( exp(a) );
+
+        case FUNC_LOG:
+        case FUNC_LN:
+        if(b>0){
+          return(log (a) / log (b));             
+        }    else {
+          return( log(a) );
+        }    
+
+        case FUNC_ROOT:
+          return( nthroot(a,b) );
+          
+        case FUNC_SQ:
+          return( sq(a) );
+      }
     }
   }
 
-  if(*txtpos == '(')
-  {
+  if(*txtpos == '('){
     short int a;
     txtpos++;
     a = expression();
@@ -872,28 +833,21 @@ static short int expr4(void)
 expr4_error:
   expression_error = 1;
   return 0;
-
 }
 
 /***************************************************************************/
-static short int expr3(void)
-{
+static double expr3(void) {
   short int a,b;
-
   a = expr4();
-
   ignore_blanks(); // fix for eg:  100 a = a + 1
 
-  while(1)
-  {
-    if(*txtpos == '*')
-    {
+  while(1) {
+    if(*txtpos == '*') {
       txtpos++;
       b = expr4();
       a *= b;
     }
-    else if(*txtpos == '/')
-    {
+    else if(*txtpos == '/') {
       txtpos++;
       b = expr4();
       if(b != 0)
@@ -907,8 +861,7 @@ static short int expr3(void)
 }
 
 /***************************************************************************/
-static short int expr2(void)
-{
+static double expr2(void) {
   short int a,b;
 
   if(*txtpos == '-' || *txtpos == '+')
@@ -916,16 +869,13 @@ static short int expr2(void)
   else
     a = expr3();
 
-  while(1)
-  {
-    if(*txtpos == '-')
-    {
+  while(1) {
+    if(*txtpos == '-') {
       txtpos++;
       b = expr3();
       a -= b;
     }
-    else if(*txtpos == '+')
-    {
+    else if(*txtpos == '+') {
       txtpos++;
       b = expr3();
       a += b;
@@ -935,10 +885,8 @@ static short int expr2(void)
   }
 }
 /***************************************************************************/
-static short int expression(void)
-{
+static double expression(void) {
   short int a,b;
-
   a = expr2();
 
   // Check if we have an error
@@ -948,8 +896,7 @@ static short int expression(void)
   if(table_index == RELOP_UNKNOWN)
     return a;
 
-  switch(table_index)
-  {
+  switch(table_index) {
   case RELOP_GE:
     b = expr2();
     if(a >= b) return 1;
@@ -980,14 +927,12 @@ static short int expression(void)
 }
 
 /***************************************************************************/
-void loop()
-{
-  Serial.println("&with &V&G&A&x&& video output"); 
-  //Serial.println("Version beta 1.0"); 
+void loop() {
+
   unsigned char *start;
   unsigned char *newEnd;
   unsigned char linelen;
-  boolean isDigital;
+  boolean isDigital = true ,isMax = true;
   boolean alsoWait = false;
   int val;
 
@@ -996,15 +941,6 @@ void loop()
   sp = program+sizeof(program);  // Needed for printnum
   stack_limit = program+sizeof(program)-STACK_SIZE;
   variables_begin = stack_limit - 27*VAR_SIZE;
-
-
-#ifdef ARDUINO
-#ifdef ENABLE_EEPROM
-  // eprom size
-  printnum( E2END+1 );
-  printmsg( eeprommsg );
-#endif /* ENABLE_EEPROM */
-#endif /* ARDUINO */
 
 warmstart:
   // this signifies that it is running in 'direct' mode.
@@ -1032,8 +968,7 @@ prompt:
   {
     unsigned char *dest;
     dest = variables_begin-1;
-    while(1)
-    {
+    while(1) {
       *dest = *txtpos;
       if(txtpos == program_end+sizeof(unsigned short))
         break;
@@ -1064,13 +999,11 @@ prompt:
   *((unsigned short *)txtpos) = linenum;
   txtpos[sizeof(LINENUM)] = linelen;
 
-
   // Merge it into the rest of the program
   start = findline();
 
   // If a line with that number exists, then remove it
-  if(start != program_end && *((LINENUM *)start) == linenum)
-  {
+  if(start != program_end && *((LINENUM *)start) == linenum) {
     unsigned char *dest, *from;
     unsigned tomove;
 
@@ -1078,24 +1011,20 @@ prompt:
     dest = start;
 
     tomove = program_end - from;
-    while( tomove > 0)
-    {
+    while( tomove > 0) {
       *dest = *from;
       from++;
       dest++;
       tomove--;
-    } 
+    }
     program_end = dest;
   }
 
   if(txtpos[sizeof(LINENUM)+sizeof(char)] == NL) // If the line has no txt, it was just a delete
     goto prompt;
 
-
-
   // Make room for the new line, either all in one hit or lots of little shuffles
-  while(linelen > 0)
-  { 
+  while(linelen > 0) {
     unsigned int tomove;
     unsigned char *from,*dest;
     unsigned int space_to_make;
@@ -1107,12 +1036,10 @@ prompt:
     newEnd = program_end+space_to_make;
     tomove = program_end - start;
 
-
     // Source and destination - as these areas may overlap we need to move bottom up
     from = program_end;
     dest = newEnd;
-    while(tomove > 0)
-    {
+    while(tomove > 0) {
       from--;
       dest--;
       *dest = *from;
@@ -1120,8 +1047,7 @@ prompt:
     }
 
     // Copy over the bytes into the new space
-    for(tomove = 0; tomove < space_to_make; tomove++)
-    {
+    for(tomove = 0; tomove < space_to_make; tomove++) {
       *start = *txtpos;
       txtpos++;
       start++;
@@ -1135,14 +1061,13 @@ unimplemented:
   printmsg(unimplimentedmsg);
   goto prompt;
 
-qhow: 
+qhow:
   printmsg(howmsg);
   goto prompt;
 
-qwhat:  
+qwhat:
   printmsgNoNL(whatmsg);
-  if(current_line != NULL)
-  {
+  if(current_line != NULL) {
     unsigned char tmp = *txtpos;
     if(*txtpos != NL)
       *txtpos = '^';
@@ -1153,7 +1078,7 @@ qwhat:
   line_terminator();
   goto prompt;
 
-qsorry: 
+qsorry:
   printmsg(sorrymsg);
   goto warmstart;
 
@@ -1165,24 +1090,21 @@ run_next_statement:
     goto execnextline;
   goto interperateAtTxtpos;
 
-direct: 
+direct:
   txtpos = program_end+sizeof(LINENUM);
   if(*txtpos == NL)
     goto prompt;
 
 interperateAtTxtpos:
-  if(breakcheck())
-  {
+  if(breakcheck()){
     printmsg(breakmsg);
     goto warmstart;
   }
 
   scantable(keywords);
 
-  switch(table_index)
-  {
-  case KW_DELAY:
-    {
+  switch(table_index) {
+  case KW_DELAY: {
 #ifdef ARDUINO
       expression_error = 0;
       val = expression();
@@ -1207,10 +1129,6 @@ interperateAtTxtpos:
     if(txtpos[0] != NL)
       goto qwhat;
     program_end = program_start;
-    Terminal.setForegroundColor(fabgl::Color::BrightWhite);
-    Terminal.setBackgroundColor(fabgl::Color::Black);
-    
-    Terminal.clear();
     print_info();
     goto prompt;
   case KW_RUN:
@@ -1243,19 +1161,21 @@ interperateAtTxtpos:
   case KW_GOSUB:
     goto gosub;
   case KW_RETURN:
-    goto gosub_return; 
+    goto gosub_return;
   case KW_REM:
   case KW_QUOTE:
     goto execnextline;  // Ignore line completely
   case KW_FOR:
-    goto forloop; 
+    goto forloop;
   case KW_INPUT:
-    goto input; 
+    goto input;
   case KW_PRINT:
   case KW_QMARK:
     goto print;
   case KW_POKE:
     goto poke;
+  case KW_MILS:
+    goto milis;
   case KW_END:
   case KW_STOP:
     // This is the easy way to end - set the current line to the end of program attempt to run it
@@ -1292,11 +1212,55 @@ interperateAtTxtpos:
     goto cursor;
   case KW_AT:
     goto at;
+  case KW_SCROLL:
+    goto scroll;    
+  case KW_CHR:
+    goto chr;
+  case KW_TAB:
+    goto tab;
+#ifdef ENABLE_TONES
+  case KW_TONEW:
+    alsoWait = true;
+  case KW_TONE:
+    goto tonegen;
+  case KW_NOTONE:
+    goto tonestop;
+#endif
+
   case KW_DEFAULT:
     goto assignment;
   default:
     break;
   }
+scroll:
+  tc.setCursorPos(0,0);
+  tc.setCursorPos(0,25);
+  printmsg((unsigned char *)"");
+  tc.setCursorPos(0,0);
+
+tab:
+    short int tab;
+    ignore_blanks();
+    expression_error = 0;
+    tab = expression();
+    if(expression_error)
+      goto qwhat;
+    tc.cursorRight(tab);
+    if(*txtpos != NL && *txtpos != ':')
+      goto qwhat;
+    goto run_next_statement;
+
+chr:
+    short int chr;
+    ignore_blanks();
+    expression_error = 0;
+    chr = expression();
+    if(expression_error)
+      goto qwhat;
+    if( chr < 0 || chr > 255)
+      goto qwhat;
+    Terminal.print(char(chr));
+    goto run_next_statement;
 
 execnextline:
   if(current_line == NULL)    // Processing direct commands?
@@ -1309,76 +1273,25 @@ execline:
   txtpos = current_line+sizeof(LINENUM)+sizeof(char);
   goto interperateAtTxtpos;
 
-#ifdef ARDUINO
-#ifdef ENABLE_EEPROM
-elist:
+milis:
   {
-    int i;
-    for( i = 0 ; i < (E2END +1) ; i++ )
-    {
-      val = EEPROM.read( i );
-
-      if( val == '\0' ) {
-        goto execnextline;
-      }
-
-      if( ((val < ' ') || (val  > '~')) && (val != NL) && (val != CR))  {
-        outchar( '?' );
-      } 
-      else {
-        outchar( val );
-      }
-    }
+    int value;
+    unsigned char var;
+    ignore_blanks();
+    if(*txtpos < 'A' || *txtpos > 'Z')
+      goto qwhat;
+    var = *txtpos;
+    txtpos++;
+    ignore_blanks();
+    if(*txtpos != NL && *txtpos != ':')
+      goto qwhat;
+    value = millis() - old_millis;
+    old_millis=millis();
+    ((short int *)variables_begin)[var - 'A'] = value;
+    goto run_next_statement;
   }
-  goto execnextline;
 
-eformat:
-  {
-    for( int i = 0 ; i < E2END ; i++ )
-    {
-      if( (i & 0x03f) == 0x20 ) outchar( '.' );
-      EEPROM.write( i, 0 );
-    }
-    outchar( LF );
-  }
-  goto execnextline;
-
-esave:
-  {
-    outStream = kStreamEEProm;
-    eepos = 0;
-
-    // copied from "List"
-    list_line = findline();
-    while(list_line != program_end) {
-      printline();
-    }
-    outchar('\0');
-
-    // go back to standard output, close the file
-    outStream = kStreamSerial;
-    
-    goto warmstart;
-  }
-  
-  
-echain:
-  runAfterLoad = true;
-
-eload:
-  // clear the program
-  program_end = program_start;
-
-  // load from a file into memory
-  eepos = 0;
-  inStream = kStreamEEProm;
-  inhibitOutput = true;
-  goto warmstart;
-#endif /* ENABLE_EEPROM */
-#endif
-
-input:
-  {
+input: {
     unsigned char var;
     int value;
     ignore_blanks();
@@ -1397,16 +1310,16 @@ inputagain:
     ignore_blanks();
     expression_error = 0;
     value = expression();
+
+    txtpos = tmptxtpos;
     if(expression_error)
       goto inputagain;
     ((short int *)variables_begin)[var-'A'] = value;
-    txtpos = tmptxtpos;
 
     goto run_next_statement;
   }
 
-forloop:
-  {
+forloop: {
     unsigned char var;
     short int initial, step, terminal;
     ignore_blanks();
@@ -1434,8 +1347,7 @@ forloop:
       goto qwhat;
 
     scantable(step_tab);
-    if(table_index == 0)
-    {
+    if(table_index == 0) {
       step = expression();
       if(expression_error)
         goto qwhat;
@@ -1446,9 +1358,7 @@ forloop:
     if(*txtpos != NL && *txtpos != ':')
       goto qwhat;
 
-
-    if(!expression_error && *txtpos == NL)
-    {
+    if(!expression_error && *txtpos == NL) {
       struct stack_for_frame *f;
       if(sp + sizeof(struct stack_for_frame) < stack_limit)
         goto qsorry;
@@ -1523,7 +1433,7 @@ gosub_return:
         // Is the the variable we are looking for?
         if(txtpos[-1] == f->for_var)
         {
-          short int *varaddr = ((short int *)variables_begin) + txtpos[-1] - 'A'; 
+          short int *varaddr = ((short int *)variables_begin) + txtpos[-1] - 'A';
           *varaddr = *varaddr + f->step;
           // Use a different test depending on the sign of the step increment
           if((f->step > 0 && *varaddr <= f->terminal) || (f->step < 0 && *varaddr >= f->terminal))
@@ -1559,9 +1469,9 @@ assignment:
     if(*txtpos < 'A' || *txtpos > 'Z')
       goto qhow;
 
-      
+
     var = (short int *)variables_begin + *txtpos - 'A';
-    
+
     txtpos++;
 
     ignore_blanks();
@@ -1671,7 +1581,7 @@ print:
       break;
     }
     else
-      goto qwhat; 
+      goto qwhat;
   }
   goto run_next_statement;
 
@@ -1679,29 +1589,7 @@ mem:
   // memory free
   printnum(variables_begin-program_end);
   printmsg(memorymsg);
-#ifdef ARDUINO
-#ifdef ENABLE_EEPROM
-  {
-    // eprom size
-    printnum( E2END+1 );
-    printmsg( eeprommsg );
-    
-    // figure out the memory usage;
-    val = ' ';
-    int i;   
-    for( i=0 ; (i<(E2END+1)) && (val != '\0') ; i++ ) {
-      val = EEPROM.read( i );    
-    }
-    printnum( (E2END +1) - (i-1) );
-    
-    printmsg( eepromamsg );
-  }
-#endif /* ENABLE_EEPROM */
-#endif /* ARDUINO */
   goto run_next_statement;
-
-
-  /*************************************************/
 
 #ifdef ARDUINO
 awrite: // AWRITE <pin>,val
@@ -1724,18 +1612,16 @@ dwrite:
     txtpos++;
     ignore_blanks();
 
-
-    txtposBak = txtpos; 
+    txtposBak = txtpos;
     scantable(highlow_tab);
-    if(table_index != HIGHLOW_UNKNOWN)
-    {
+    if(table_index != HIGHLOW_UNKNOWN) {
       if( table_index <= HIGHLOW_HIGH ) {
         value = 1;
-      } 
+      }
       else {
         value = 0;
       }
-    } 
+    }
     else {
 
       // and the value (numerical)
@@ -1747,7 +1633,7 @@ dwrite:
     pinMode( pinNo, OUTPUT );
     if( isDigital ) {
       digitalWrite( pinNo, value );
-    } 
+    }
     else {
       //analogWrite( pinNo, value );
     }
@@ -1791,32 +1677,24 @@ load:
     if(expression_error)
       goto qwhat;
 
-#ifdef ARDUINO
     // Arduino specific
     if( !SD.exists( (char *)filename ))
     {
       printmsg( sdfilemsg );
-    } 
+    }
     else {
 
       fp = SD.open( (const char *)filename );
       inStream = kStreamFile;
       inhibitOutput = true;
     }
-#else // ARDUINO
-    // Desktop specific
-#endif // ARDUINO
-    // this will kickstart a series of events to read in from the file.
+
 
   }
   goto warmstart;
 #else // ENABLE_FILEIO
   goto unimplemented;
 #endif // ENABLE_FILEIO
-
-
-
-
 
 
 save:
@@ -1859,12 +1737,6 @@ save:
   }
 
 
-
-
-
-
-
-
 rseed:
   {
     short int value;
@@ -1884,10 +1756,8 @@ rseed:
 cls:
 {
   Terminal.clear();
-  //tc.clear();
-  //tc.setCursorPos(0,0);
   goto run_next_statement;
-} 
+}
 
 
 color:
@@ -2023,7 +1893,6 @@ color:
       Terminal.setBackgroundColor(fabgl::Color::Black);
       break;
     }
-
     goto run_next_statement;
   }
 
@@ -2122,7 +1991,7 @@ line: {
       goto qwhat;
     txtpos++;
     ignore_blanks();
-    
+
     //Get endY
     expression_error = 0;
     endY = expression();
@@ -2218,7 +2087,6 @@ rectangle: {
     txtpos++;
     ignore_blanks();
 
-
     //Get endY
     expression_error = 0;
     endY = expression();
@@ -2241,18 +2109,16 @@ rectangle: {
     cv.setPenWidth(penWidth);
     cv.drawRectangle(startX, startY, endX, endY);
 
-
     cv.setPenWidth(1);
     //Fills the retangle
     if(fillColor > -1) {
-      
+
       setPenColor(fillColor);
       for(short int y = startY+ 1; y < endY; y++ ){
         cv.drawLine(startX +1 , y, endX-1, y);
       }
-      
-    }
 
+    }
 
   goto run_next_statement;
 }
@@ -2313,7 +2179,6 @@ elipse: {
     txtpos++;
     ignore_blanks();
 
-
     //Get height
     expression_error = 0;
     height = expression();
@@ -2326,19 +2191,15 @@ elipse: {
     txtpos++;
     ignore_blanks();
 
-
-
     //Get penWidth
     expression_error = 0;
     penWidth = expression();
     if(expression_error)
       goto qwhat;
 
-
-
     setPenColor(color);
     cv.setPenWidth(penWidth);
-    
+
     cv.drawEllipse(x, y, width, height);
 
 
@@ -2352,7 +2213,7 @@ cursor: {
     enable = expression();
     if(expression_error)
       goto qwhat;
-      
+
     Terminal.enableCursor(enable);
 
   goto run_next_statement;
@@ -2390,8 +2251,7 @@ tonestop:
   noTone( kPiezoPin );
   goto run_next_statement;
 
-tonegen:
-  {
+tonegen: {
     // TONE freq, duration
     // if either are 0, tones turned off
     short int freq;
@@ -2408,7 +2268,6 @@ tonegen:
       goto qwhat;
     txtpos++;
     ignore_blanks();
-
 
     //Get the duration
     expression_error = 0;
@@ -2430,8 +2289,7 @@ tonegen:
 }
 
 // returns 1 if the character is valid in a filename
-static int isValidFnChar( char c )
-{
+static int isValidFnChar( char c ){
   if( c >= '0' && c <= '9' ) return 1; // number
   if( c >= 'A' && c <= 'Z' ) return 1; // LETTER
   if( c >= 'a' && c <= 'z' ) return 1; // letter (for completeness)
@@ -2444,8 +2302,7 @@ static int isValidFnChar( char c )
   return 0;
 }
 
-unsigned char * filenameWord(void)
-{
+unsigned char * filenameWord(void) {
   // SDL - I wasn't sure if this functionality existed above, so I figured i'd put it here
   unsigned char * ret = txtpos;
   expression_error = 0;
@@ -2473,49 +2330,107 @@ unsigned char * filenameWord(void)
   return ret;
 }
 
+static void tone(uint8_t pin, unsigned int frequency, uint8_t duration) {
+  ledcAttachPin(pin, TONE_LEDC_CHANNEL);
+  ledcWriteTone(TONE_LEDC_CHANNEL, frequency);
+  delay(duration);
+  noTone(pin);
+}
+
+static void noTone(uint8_t pin){
+  ledcDetachPin(pin);
+  ledcWrite(TONE_LEDC_CHANNEL, 0);
+}
+
+
 /***************************************************************************/
-static void line_terminator(void)
-{
+static void line_terminator(void) {
   outchar(NL);
   outchar(CR);
 }
 
 /***********************************************************/
-void setup()
-{
+void setup() {
 #ifdef ARDUINO
   Serial.begin(kConsoleBaud); // opens serial port
   while( !Serial ); // for Leonardo
-  
+
   //Serial.println("Keyboard Test:");
   delay(500);  // avoid garbage into the UART
   Serial.write("\n\nReset\n");
-  
+
   PS2Controller.begin(PS2Preset::KeyboardPort0);
 
-  //VGAController.begin(GPIO_NUM_22,  GPIO_NUM_19,  GPIO_NUM_5, GPIO_NUM_23, GPIO_NUM_15);
-  VGAController.begin(GPIO_NUM_22, GPIO_NUM_21, GPIO_NUM_19, GPIO_NUM_18, GPIO_NUM_5, GPIO_NUM_4, GPIO_NUM_23, GPIO_NUM_15);
+  auto keyboard = PS2Controller.keyboard();
+  switch (keyboard_layout) {// 0 = US, 1 = UK, 2 = DE,3 = IT,4 = ES
+    case 0:
+      keyboard->setLayout(&fabgl::USLayout);
+      break;
+    case 1:
+      keyboard->setLayout(&fabgl::UKLayout);
+      break;
+    case 2:
+      keyboard->setLayout(&fabgl::GermanLayout);
+      break;
+    case 3:
+      keyboard->setLayout(&fabgl::ItalianLayout);
+      break;
+    case 4:
+      keyboard->setLayout(&fabgl::SpanishLayout);
+      break;
+    default:
+      keyboard->setLayout(&fabgl::USLayout);
+      break;
+  }
+
+  VGAController.begin(GPIO_NUM_22, GPIO_NUM_15, GPIO_NUM_21, GPIO_NUM_17, GPIO_NUM_4);
   VGAController.setResolution(VGA_640x200_70Hz);
-  
+  //VGAController.setResolution(VGA_640x480_60Hz);
+/*
+  VGAController.setPaletteItem(0, RGB888(0, 0, 0));
+  VGAController.setPaletteItem(1, RGB888(255, 255, 255));
+  VGAController.setPaletteItem(2, RGB888(104, 55, 43));
+  VGAController.setPaletteItem(3, RGB888(122, 164, 178));
+  VGAController.setPaletteItem(4, RGB888(111, 61, 134));
+  VGAController.setPaletteItem(5, RGB888(88, 141, 67));
+  VGAController.setPaletteItem(6, RGB888(53, 40, 121));
+  VGAController.setPaletteItem(7, RGB888(0, 0, 0));
+  VGAController.setPaletteItem(8, RGB888(0, 0, 0));
+  VGAController.setPaletteItem(9, RGB888(0, 0, 0));
+  VGAController.setPaletteItem(10, RGB888(0, 0, 0));
+  VGAController.setPaletteItem(11, RGB888(0, 0, 0));
+  VGAController.setPaletteItem(12, RGB888(0, 0, 0));
+  VGAController.setPaletteItem(13, RGB888(0, 0, 0));
+  VGAController.setPaletteItem(14, RGB888(0, 0, 0));
+  VGAController.setPaletteItem(15, RGB888(0, 0, 0));
+  VGAController.setPaletteItem(16, RGB888(0, 0, 0));
+
+		 * #000000 black      0, RGB888(000, 000, 000)
+		 * #FFFFFF white      1, RGB888(255, 255, 255)
+		 * #68372B red        2, RGB888(104, 055, 043)
+		 * #70A4B2 light blue 3, RGB888(122, 164, 178)
+		 * #6F3D86 purple     4, RGB888(111, 061, 134)
+		 * #588D43 green      5, RGB888(088, 141, 067)
+		 * #352879 dark blue  6, RGB888(053, 040, 121)
+		 * #B8C76F yellow
+		 * #6F4F25 brown
+		 * #433900 dark brown
+		 * #9A6759 light red
+		 * #444444 dark grey
+		 * #6C6C6C mid grey
+		 * #9AD284 light green
+		 * #6C5EB5 mid blue
+		 * #959595 light grey
+*/  
+
   Canvas cv(&VGAController);
-
   Terminal.begin(&VGAController);
-  Terminal.setBackgroundColor(Color::Black);
-  Terminal.setForegroundColor(Color::BrightGreen);
-
-
   Terminal.connectLocally();      // to use Terminal.read(), available(), etc..
-  
-  Terminal.clear();
   print_info();
-  //Terminal.setBackgroundColor(Color::Blue);
-  Terminal.setForegroundColor(Color::White);
-
-  Terminal.enableCursor(true);
 
 #ifdef ENABLE_FILEIO
   initSD();
-  
+
 #ifdef ENABLE_AUTORUN
   if( SD.exists( kAutorunFilename )) {
     program_end = program_start;
@@ -2528,21 +2443,20 @@ void setup()
 
 #endif /* ENABLE_FILEIO */
 
-#ifdef ENABLE_EEPROM
-#ifdef ENABLE_EAUTORUN
-  // read the first byte of the eeprom. if it's a number, assume it's a program we can load
-  int val = EEPROM.read(0);
-  if( val >= '0' && val <= '9' ) {
-    program_end = program_start;
-    inStream = kStreamEEProm;
-    eepos = 0;
-    inhibitOutput = true;
-    runAfterLoad = true;
-  }
-#endif /* ENABLE_EAUTORUN */
-#endif /* ENABLE_EEPROM */
-
 #endif /* ARDUINO */
+}
+
+static void print_info(){   
+    Terminal.clear();    
+    Terminal.printf("Tiny Basic ESP32 %s\r\n", kVersion);
+    Terminal.printf("\e[31mScreen Size        :\e[33m %d x %d\r\n", VGAController.getScreenWidth(), VGAController.getScreenHeight());
+    Terminal.printf("\e[32mTerminal Size      :\e[33m %d x %d\r\n", Terminal.getColumns(), Terminal.getRows());
+    Terminal.printf("\e[34mCPU                :\e[33m %d MHz\r\n", getCpuFrequencyMhz());
+    Terminal.printf("\e[35mFree DMA Memory    :\e[33m %d\r\n", heap_caps_get_free_size(MALLOC_CAP_DMA));
+    Terminal.printf("\e[36mFree 32 bit Memory :\e[33m %d\r\n\n", heap_caps_get_free_size(MALLOC_CAP_32BIT));
+    tone( kPiezoPin, 4400, 100 );
+    Terminal.setForegroundColor(Color::White);    
+    Terminal.enableCursor(1);    
 }
 
 /***********************************************************/
@@ -2566,7 +2480,7 @@ static int inchar()
 {
   int v;
 #ifdef ARDUINO
-  
+
   switch( inStream ) {
   case( kStreamFile ):
 #ifdef ENABLE_FILEIO
@@ -2576,58 +2490,48 @@ static int inchar()
       fp.close();
       goto inchar_loadfinish;
     }
-    return v;    
+    return v;
 #else
 #endif
      break;
   case( kStreamEEProm ):
-#ifdef ENABLE_EEPROM
-#ifdef ARDUINO
-    v = EEPROM.read( eepos++ );
-    if( v == '\0' ) {
-      goto inchar_loadfinish;
-    }
-    return v;
-#endif
-#else
     inStream = kStreamSerial;
     return NL;
-#endif
      break;
   case( kStreamSerial ):
   default:
     while(1)
     {
-     
+
      //----------- the following is the key modification -------------------------------------------------------------------------------------------------
      //----------- where the code get the variables from the PS2 keyboard --------------------------------------------------------------------------------
      //----------- and treat them as the ones from the PC keyboard ---------------------------------------------------------------------------------------
- 
+
      /*if (keyboard.available()) {
        // read the next key
        char c = keyboard.read();
        //Serial.print(c);
-       return c; 
+       return c;
      }*/
      if (Terminal.available()) {
        // read the next key
        char c = Terminal.read();
-       //myWrite(c); 
+       //myWrite(c);
        //Serial.print(c);
-       return c; 
+       return c;
      }
      //------------ end of modification -------------------------------------------------------------------------------------------------------------------
-     
+
      /*if(Serial.available())
      return Serial.read(); */
       if(Serial.available()){
-         char c = Serial.read(); 
+         char c = Serial.read();
          //vga.print(c); //-------------------------------------------------- così scrive solo i caratteri della tastiera ----------------------------------------------------------------
-         return c; 
+         return c;
       }
     }
   }
-  
+
 inchar_loadfinish:
   inStream = kStreamSerial;
   inhibitOutput = false;
@@ -2637,7 +2541,7 @@ inchar_loadfinish:
     triggerRun = true;
   }
   return NL; // trigger a prompt.
-  
+
 #else
   // otherwise. desktop!
   int got = getchar();
@@ -2658,22 +2562,13 @@ static void outchar(unsigned char c)
   #ifdef ENABLE_FILEIO
     if( outStream == kStreamFile ) {
       // output to a file
-
       fp.write( c );
-    } 
+    }
     else
   #endif
-  #ifdef ARDUINO
-  #ifdef ENABLE_EEPROM
-    if( outStream == kStreamEEProm ) {
-      EEPROM.write( eepos++, c );
-    }
-    else 
-  #endif /* ENABLE_EEPROM */
-  #endif /* ARDUINO */
-    Serial.write(c); 
+    Serial.write(c);
     Terminal.write(c); //------------------------ here to write to the VGA monitor -----------------------------------
-    myWrite(c); 
+    myWrite(c);
 #else
   putchar(c);
 #endif
@@ -2684,22 +2579,23 @@ static void outchar(unsigned char c)
 
 #if ARDUINO && ENABLE_FILEIO
 
-static int initSD( void )
-{
+static int initSD(void){
   // if the card is already initialized, we just go with it.
-  // there is no support (yet?) for hot-swap of SD Cards. if you need to 
+  // there is no support (yet?) for hot-swap of SD Cards. if you need to
   // swap, pop the card, reset the arduino.)
-
   if( sd_is_initialized == true ) return kSD_OK;
 
-  //spiSD.begin(14, 16, 17, kSD_CS); ////SCK,MISO,MOSI,SS //HSPI1
-  spiSD.begin(14, 2, 12, kSD_CS);  ////SCK,MISO,MOSI,SS //HSPI1
-  
-  if( !SD.begin( kSD_CS, spiSD )) {
-    // failed
+  if (!SD.begin(SS)) {
     printmsg( sderrormsg );
     return kSD_Fail;
   }
+
+  uint8_t cardType = SD.cardType();
+  if (cardType == CARD_NONE){
+    printmsg( sdcardmsg );
+    return kSD_Fail;
+  }
+
   // success - quietly return 0
   sd_is_initialized = true;
 
@@ -2713,31 +2609,30 @@ static int initSD( void )
 #endif
 
 #if ENABLE_FILEIO
-void cmd_Files( void )
-{
+void cmd_Files(void) {
   File dir = SD.open( "/" );
   dir.seek(0);
 
-  while( true ) {
+  while(true) {
     File entry = dir.openNextFile();
-    if( !entry ) {
+    if(!entry) {
       entry.close();
       break;
     }
 
     // common header
-    printmsgNoNL( indentmsg );
-    printmsgNoNL( (const unsigned char *)entry.name() );
-    if( entry.isDirectory() ) {
-      printmsgNoNL( slashmsg );
+    printmsgNoNL(indentmsg);
+    printmsgNoNL((const unsigned char *)entry.name());
+    if(entry.isDirectory()) {
+      printmsgNoNL(slashmsg);
     }
 
     if( entry.isDirectory() ) {
       // directory ending
       for( int i=strlen( entry.name()) ; i<16 ; i++ ) {
-        printmsgNoNL( spacemsg );
+        printmsgNoNL(spacemsg);
       }
-      printmsgNoNL( dirextmsg );
+      printmsgNoNL(dirextmsg);
     }
     else {
       // file ending
@@ -2763,39 +2658,39 @@ void myWrite(char c) {
      case 0x0D:       // CR  -> CR + LF
        Terminal.write("\r\n");
        break;
-     case 0x03:       // ctrl+c 
+     case 0x03:       // ctrl+c
        printmsg(breakmsg);
        current_line = 0;
        sp = program+sizeof(program);
        printmsg(okmsg);
        break;
-     case 0x02:       // ctrl+b 
+     case 0x02:       // ctrl+b
        Terminal.setForegroundColor(Color::Red);
-       //Terminal.printf("\e[35m"); 
+       //Terminal.printf("\e[35m");
        break;
-     case 0x1B:       // ESC 
+     case 0x1B:       // ESC
        //Terminal.write("\r\n");
        switch (myScreen){
-          case 0: 
+          case 0:
              Terminal.setBackgroundColor(Color::Black);
              Terminal.setForegroundColor(Color::Yellow);
-             myScreen = 1; 
-          break; 
-          case 1: 
+             myScreen = 1;
+          break;
+          case 1:
              Terminal.setBackgroundColor(Color::Black);
              Terminal.setForegroundColor(Color::BrightWhite);
-             myScreen = 2; 
-          break; 
-          case 2: 
+             myScreen = 2;
+          break;
+          case 2:
              Terminal.setBackgroundColor(Color::Blue);
              Terminal.setForegroundColor(Color::White);
-             myScreen = 3; 
-          break; 
-          case 3: 
+             myScreen = 3;
+          break;
+          case 3:
              Terminal.setBackgroundColor(Color::Black);
              Terminal.setForegroundColor(Color::BrightGreen);
-             myScreen = 0; 
-          break; 
+             myScreen = 0;
+          break;
        }
        break;
     default:
@@ -2805,11 +2700,8 @@ void myWrite(char c) {
   }
 }
 
-
 void setPenColor(int color){
-
-    switch (color)
-    {
+    switch (color){
     case 0:
       cv.setPenColor(fabgl::Color::Red);
       break;
@@ -2861,7 +2753,5 @@ void setPenColor(int color){
     default:
       cv.setPenColor(fabgl::Color::BrightBlack);
       break;
-
     }
-
 }
