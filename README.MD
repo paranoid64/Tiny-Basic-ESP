@@ -171,3 +171,16 @@ Result:
 0
 -1
 ```
+
+**ROOT(81,4)**
+N-th root of a number. Given two numbers N and A, find N-th root of A.
+
+```
+10 A=81:N=4
+20 PRINT ROOT(A,N)
+```
+
+Result:
+```
+3
+```
