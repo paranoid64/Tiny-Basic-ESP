@@ -64,7 +64,6 @@ dec: 	112	113	114	115	116	117	118	119	120	121	122	123	124 125	126
 byte: 	p	q	r	s	t	u	v	w	x	y	z	{	|	}	~
 ```
 
-
 **TAB 3**
 
 This function influences the output so that positioning of the cursor to the desired column is achieved.
@@ -99,7 +98,7 @@ Result:
 ```
 
 **MAX(10,20)**
-
+ 
 compares 2 values and return the highest  number
 
 ```
@@ -109,7 +108,7 @@ compares 2 values and return the highest  number
 ```
 
 Result:
-```
+``` 
 20
 ```
 
@@ -124,13 +123,13 @@ returns the natural logarithm of x
 ```
 
 Result:
-```
+``` 
 4
 ```
 
 
 **LOG(65,65)**
-
+ 
 returns the logarithm of x in base n
 
 ```
