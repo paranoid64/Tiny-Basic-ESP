@@ -55,7 +55,8 @@ TerminalController tc(&Terminal);
   // if we're in here, we're a DUE probably (ARM instead of AVR)
 
   //#define RAMEND 4096-1
-  #define RAMEND 16384-1  //-------------------------- RAM increment for ESP32 ---------------------------------------------------
+  //#define RAMEND 16384-1  //-------------------------- RAM increment for ESP32 ---------------------------------------------------
+  #define RAMEND 64384-1
 #endif
 
 #include <FS.h>
@@ -82,18 +83,19 @@ File fp;
 
 // set up our RAM buffer size for program and user input
 // NOTE: This number will have to change if you include other libraries.
-#ifdef ARDUINO
+
 #ifdef ENABLE_FILEIO
-#define kRamFileIO (1030) /* approximate */
+  #define kRamFileIO (1030) /* approximate */
 #else
-#define kRamFileIO (0)
+  #define kRamFileIO (0)
 #endif
+
 #ifdef ENABLE_TONES
-#define kRamTones (40)
+  #define kRamTones (40)
 #else
-#define kRamTones (0)
+  #define kRamTones (0)
 #endif
-#endif /* ARDUINO */
+
 #define kRamSize  (RAMEND - 1160 - kRamFileIO - kRamTones)
 
 #ifndef ARDUINO
@@ -103,7 +105,7 @@ File fp;
 #undef ENABLE_TONES
 
 // size of our program ram
-#define kRamSize   4096 /* arbitrary */
+//#define kRamSize   4096 /* arbitrary */
 //#define kRamSize   16384 /* arbitrary */ //-------------------------------------------------------------- kRamSize -------------------------------------------------------------------------
 
 #ifdef ENABLE_FILEIO
@@ -1237,18 +1239,19 @@ scroll:
   tc.setCursorPos(0,25);
   printmsg((unsigned char *)"");
   tc.setCursorPos(0,0);
+  goto run_next_statement;
 
 tab:
-    short int tab;
-    ignore_blanks();
-    expression_error = 0;
-    tab = expression();
-    if(expression_error)
-      goto qwhat;
-    tc.cursorRight(tab);
-    if(*txtpos != NL && *txtpos != ':')
-      goto qwhat;
-    goto run_next_statement;
+  short int tab;
+  ignore_blanks();
+  expression_error = 0;
+  tab = expression();
+  if(expression_error)
+    goto qwhat;
+  tc.cursorRight(tab);
+  if(*txtpos != NL && *txtpos != ':')
+    goto qwhat;
+  goto run_next_statement;
 
 chr:
     short int chr;
@@ -1730,8 +1733,6 @@ save:
     outStream = kStreamSerial;
 
     fp.close();
-#else // ARDUINO
-    // desktop
 #endif // ARDUINO
     goto warmstart;
   }
@@ -2218,6 +2219,16 @@ cursor: {
 
   goto run_next_statement;
 }
+/*
+inkey:{
+  //keyboard.read()
+  if (Terminal.available()) {
+    char c = Terminal.read();
+    Serial.print(c);
+    //return c;
+  }
+}
+*/
 
 at: {
     short int x;
